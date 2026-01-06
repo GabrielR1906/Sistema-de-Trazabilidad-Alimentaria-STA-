@@ -1,45 +1,66 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Truck } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { saveLogisticsAction } from "@/app/actions" // Importamos la Server Action
+import { registerLogistics } from "@/app/actions" // Nombre actualizado
 
 export function LogisticsForm({ onSuccess }: { onSuccess?: () => void }) {
-  const [batchId, setBatchId] = useState("")
-  const [temp, setTemp] = useState("")
-  const [date, setDate] = useState("")
   const { toast } = useToast()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const data = { batchId, transportTemperature: parseFloat(temp), deliveryDate: date }
-    
-    // Usamos la Server Action
-    const validation = await saveLogisticsAction(data)
-
-    if (!validation.isValid) {
-      toast({ title: "Error", description: validation.errors.join(", "), variant: "destructive" })
-      return
+  async function clientAction(formData: FormData) {
+    try {
+      await registerLogistics(formData)
+      toast({ title: "Éxito", description: "Logística y envío registrados." })
+      if (onSuccess) onSuccess()
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudo registrar la logística.", variant: "destructive" })
     }
-
-    toast({ title: "Éxito", description: "Logística completada" })
-    setBatchId(""); setTemp(""); setDate("")
-    onSuccess?.()
   }
 
   return (
     <Card>
-      <CardHeader><CardTitle className="flex items-center gap-2"><Truck className="h-5 w-5" /> Logística</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Truck className="h-5 w-5" /> Logística
+        </CardTitle>
+      </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input placeholder="ID del Lote" value={batchId} onChange={(e) => setBatchId(e.target.value)} required />
-          <Input type="number" placeholder="Temperatura (°C)" value={temp} onChange={(e) => setTemp(e.target.value)} required />
-          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
-          <Button type="submit" className="w-full">Finalizar</Button>
+        <form action={clientAction} className="space-y-4">
+          <Input 
+            name="batchId" 
+            placeholder="ID del Lote" 
+            required 
+          />
+          
+          <Input 
+            name="destination" 
+            placeholder="Destino Final" 
+            required 
+          />
+          
+          <Input 
+            name="transportType" 
+            placeholder="Tipo de Transporte (Ej: Camión)" 
+          />
+
+          <Input 
+            name="transportTemperature" 
+            type="number" 
+            step="0.1" 
+            placeholder="Temperatura Transporte (°C)" 
+            required 
+          />
+          
+          <Input 
+            name="deliveryDate" 
+            type="date" 
+            required 
+          />
+          
+          <Button type="submit" className="w-full">Finalizar Envío</Button>
         </form>
       </CardContent>
     </Card>

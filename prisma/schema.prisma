@@ -7,25 +7,31 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Modelo único para la trazabilidad completa del mango
+// Modelo ÚNICO que contiene toda la información del lote
 model MangoBatch {
-  batchId              String   @id
-  // Origen
-  harvestDate          String?
+  batchId              String    @id
+  
+  // 1. Etapa de Origen (Cosecha)
+  harvestDate          DateTime? 
   quantity             Float?
   location             String?
-  // Transformación
-  washingCompleted     Boolean  @default(false)
-  packagingCompleted   Boolean  @default(false)
-  qualityStatus        String   @default("pending") // pass, fail, pending
-  processingDate       String?
-  notes                String?
-  // Logística
-  transportTemperature Float?
-  deliveryDate         String?
-  destination          String?
-  carrier              String?
   
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  // 2. Etapa de Transformación (Procesamiento)
+  washingCompleted     Boolean   @default(false)
+  packagingCompleted   Boolean   @default(false)
+  qualityStatus        String    @default("pending") // pass, fail, pending
+  processingDate       DateTime? 
+  processingTemperature Float?   // Campo nuevo para corregir error
+  processingDuration    Int?     // Campo nuevo para corregir error
+  notes                String?
+  
+  // 3. Etapa de Logística
+  transportTemperature Float?
+  deliveryDate         DateTime? 
+  destination          String?
+  transportType        String?   
+  
+  // Metadatos
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 }

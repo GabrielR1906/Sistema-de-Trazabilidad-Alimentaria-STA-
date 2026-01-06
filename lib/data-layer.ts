@@ -1,11 +1,12 @@
 // lib/data-layer.ts
 import { prisma } from "./prisma"
 
+// --- Interfaces ---
 export interface HarvestData {
   batchId: string
-  harvestDate: string
-  quantity?: number
-  location?: string
+  harvestDate: Date
+  quantity: number
+  location: string
 }
 
 export interface ProcessingData {
@@ -13,37 +14,46 @@ export interface ProcessingData {
   washingCompleted: boolean
   packagingCompleted: boolean
   qualityStatus: string
-  processingDate?: string
+  processingDate?: Date
+  processingTemperature?: number | null 
+  processingDuration?: number | null
   notes?: string
 }
 
 export interface LogisticsData {
   batchId: string
   transportTemperature: number
-  deliveryDate: string
-  destination?: string
+  deliveryDate: Date
+  destination: string
+  transportType?: string | null
   carrier?: string
 }
 
-// Interfaz plana que coincide con schema.prisma
 export interface TraceabilityRecord {
   batchId: string
-  harvestDate?: string | null
-  quantity?: number | null
-  location?: string | null
+  harvestDate: Date | null
+  quantity: number | null
+  location: string | null
+  
   washingCompleted: boolean
   packagingCompleted: boolean
   qualityStatus: string
-  processingDate?: string | null
-  notes?: string | null
-  transportTemperature?: number | null
-  deliveryDate?: string | null
-  destination?: string | null
-  carrier?: string | null
+  processingDate: Date | null
+  processingTemperature: number | null
+  processingDuration: number | null
+  notes: string | null
+  
+  transportTemperature: number | null
+  deliveryDate: Date | null
+  destination: string | null
+  transportType: string | null
+  carrier: string | null
+  
   createdAt: Date
   updatedAt: Date
 }
 
+// --- Clase DataLayer Corregida ---
 export class DataLayer {
   static async getRecord(batchId: string): Promise<TraceabilityRecord | null> {
     return await prisma.mangoBatch.findUnique({ where: { batchId } })
@@ -53,19 +63,32 @@ export class DataLayer {
     return await prisma.mangoBatch.findMany({ orderBy: { updatedAt: 'desc' } })
   }
 
+  // CORRECCIÓN AQUÍ: Evitamos duplicar batchId y lo quitamos del update
   static async updateHarvest(batchId: string, data: HarvestData) {
+    // Sepamos el ID del resto de datos para no intentar actualizar la PK
+    const { batchId: _, ...dataWithoutId } = data
+    
     return await prisma.mangoBatch.upsert({
       where: { batchId },
-      update: { ...data },
-      create: { batchId, ...data }
+      update: dataWithoutId, // Actualizamos solo los datos
+      create: data           // Creamos con todos los datos (incluido ID)
     })
   }
 
   static async updateProcessing(batchId: string, data: ProcessingData) {
-    return await prisma.mangoBatch.update({ where: { batchId }, data })
+    // Quitamos batchId de los datos a actualizar para evitar conflictos
+    const { batchId: _, ...dataWithoutId } = data
+    return await prisma.mangoBatch.update({ 
+      where: { batchId }, 
+      data: dataWithoutId 
+    })
   }
 
   static async updateLogistics(batchId: string, data: LogisticsData) {
-    return await prisma.mangoBatch.update({ where: { batchId }, data })
+    const { batchId: _, ...dataWithoutId } = data
+    return await prisma.mangoBatch.update({ 
+      where: { batchId }, 
+      data: dataWithoutId 
+    })
   }
 }
