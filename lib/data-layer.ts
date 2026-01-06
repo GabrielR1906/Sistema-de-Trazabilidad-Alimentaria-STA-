@@ -12,7 +12,7 @@ export interface ProcessingData {
   batchId: string
   washingCompleted: boolean
   packagingCompleted: boolean
-  qualityStatus: "pass" | "fail" | "pending"
+  qualityStatus: string
   processingDate?: string
   notes?: string
 }
@@ -25,14 +25,31 @@ export interface LogisticsData {
   carrier?: string
 }
 
-export type TraceabilityRecord = any; // Representa el modelo MangoBatch plano
+// Interfaz plana que coincide con schema.prisma
+export interface TraceabilityRecord {
+  batchId: string
+  harvestDate?: string | null
+  quantity?: number | null
+  location?: string | null
+  washingCompleted: boolean
+  packagingCompleted: boolean
+  qualityStatus: string
+  processingDate?: string | null
+  notes?: string | null
+  transportTemperature?: number | null
+  deliveryDate?: string | null
+  destination?: string | null
+  carrier?: string | null
+  createdAt: Date
+  updatedAt: Date
+}
 
 export class DataLayer {
-  static async getRecord(batchId: string) {
+  static async getRecord(batchId: string): Promise<TraceabilityRecord | null> {
     return await prisma.mangoBatch.findUnique({ where: { batchId } })
   }
 
-  static async getAllRecords() {
+  static async getAllRecords(): Promise<TraceabilityRecord[]> {
     return await prisma.mangoBatch.findMany({ orderBy: { updatedAt: 'desc' } })
   }
 

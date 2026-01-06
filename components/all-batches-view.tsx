@@ -1,16 +1,26 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { TraceabilityLogic } from "@/lib/business-logic"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { getAllBatchesAction } from "@/app/actions" // Importamos la Server Action
+
+// Definimos la función auxiliar aquí para evitar importar el archivo de lógica del servidor
+function calculateCompletionPercentage(record: any) {
+  let completed = 0;
+  if (record.harvestDate) completed++;
+  if (record.qualityStatus !== "pending") completed++;
+  if (record.deliveryDate) completed++;
+  return Math.round((completed / 3) * 100);
+}
 
 export function AllBatchesView() {
   const [records, setRecords] = useState<any[]>([])
 
   useEffect(() => {
     const fetchData = async () => {
-      const data = await TraceabilityLogic.getAllBatches()
+      // Usamos la Server Action
+      const data = await getAllBatchesAction()
       setRecords(data)
     }
     fetchData()
@@ -36,7 +46,7 @@ export function AllBatchesView() {
               <Badge variant={r.qualityStatus === "pass" ? "default" : "outline"}>{r.qualityStatus}</Badge>
             </TableCell>
             <TableCell>{r.transportTemperature ? `${r.transportTemperature}°C` : "---"}</TableCell>
-            <TableCell>{TraceabilityLogic.calculateCompletionPercentage(r)}%</TableCell>
+            <TableCell>{calculateCompletionPercentage(r)}%</TableCell>
           </TableRow>
         ))}
       </TableBody>

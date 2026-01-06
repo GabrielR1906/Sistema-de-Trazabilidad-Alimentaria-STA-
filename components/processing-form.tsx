@@ -1,4 +1,5 @@
 "use client"
+
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -6,8 +7,8 @@ import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Package2 } from "lucide-react"
-import { TraceabilityLogic } from "@/lib/business-logic"
 import { useToast } from "@/hooks/use-toast"
+import { saveProcessingAction } from "@/app/actions" // Importamos la Server Action
 
 export function ProcessingForm({ onSuccess }: { onSuccess?: () => void }) {
   const [batchId, setBatchId] = useState("")
@@ -17,7 +18,9 @@ export function ProcessingForm({ onSuccess }: { onSuccess?: () => void }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const data = { batchId, washingCompleted: true, packagingCompleted: true, qualityStatus }
-    const validation = await TraceabilityLogic.saveProcessing(data)
+    
+    // Usamos la Server Action
+    const validation = await saveProcessingAction(data)
 
     if (!validation.isValid) {
       toast({ title: "Error", description: validation.errors.join(", "), variant: "destructive" })

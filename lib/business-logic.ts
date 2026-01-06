@@ -1,43 +1,71 @@
-// lib/business-logic.ts
-import { DataLayer } from "./data-layer"
-import type { HarvestData, ProcessingData, LogisticsData, TraceabilityRecord } from "./data-layer"
+// lib/data-layer.ts
+import { prisma } from "./prisma"
 
-export class TraceabilityLogic {
-  static async saveHarvest(data: HarvestData) {
-    const validation = this.validateHarvest(data)
-    if (validation.isValid) {
-      await DataLayer.updateHarvest(data.batchId, data)
-    }
-    return validation
+export interface HarvestData {
+  batchId: string
+  harvestDate: string
+  quantity?: number
+  location?: string
+}
+
+export interface ProcessingData {
+  batchId: string
+  washingCompleted: boolean
+  packagingCompleted: boolean
+  qualityStatus: string
+  processingDate?: string
+  notes?: string
+}
+
+export interface LogisticsData {
+  batchId: string
+  transportTemperature: number
+  deliveryDate: string
+  destination?: string
+  carrier?: string
+}
+
+// Interfaz plana que coincide con schema.prisma
+export interface TraceabilityRecord {
+  batchId: string
+  harvestDate?: string | null
+  quantity?: number | null
+  location?: string | null
+  washingCompleted: boolean
+  packagingCompleted: boolean
+  qualityStatus: string
+  processingDate?: string | null
+  notes?: string | null
+  transportTemperature?: number | null
+  deliveryDate?: string | null
+  destination?: string | null
+  carrier?: string | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+export class DataLayer {
+  static async getRecord(batchId: string): Promise<TraceabilityRecord | null> {
+    return await prisma.mangoBatch.findUnique({ where: { batchId } })
   }
 
-  static async saveProcessing(data: ProcessingData) {
-    const validation = this.validateProcessing(data)
-    if (validation.isValid) {
-      await DataLayer.updateProcessing(data.batchId, data)
-    }
-    return validation
+  static async getAllRecords(): Promise<TraceabilityRecord[]> {
+    return await prisma.mangoBatch.findMany({ orderBy: { updatedAt: 'desc' } })
   }
 
-  static async saveLogistics(data: LogisticsData) {
-    const validation = this.validateLogistics(data)
-    if (validation.isValid) {
-      await DataLayer.updateLogistics(data.batchId, data)
-    }
-    return validation
+  static async updateHarvest(batchId: string, data: HarvestData) {
+    return await prisma.mangoBatch.upsert({
+      where: { batchId },
+      update: { ...data },
+      create: { batchId, ...data }
+    })
   }
 
-  // ... (Mantén aquí tus funciones de validación, assessTemperatureRisk y generateBatchId)
-  
-  static validateHarvest(data: any) { /* Tu código actual */ return { isValid: true, errors: [] } }
-  static validateProcessing(data: any) { /* Tu código actual */ return { isValid: true, errors: [] } }
-  static validateLogistics(data: any) { /* Tu código actual */ return { isValid: true, errors: [] } }
-  static generateBatchId() { return "MNG-" + Date.now() }
-  static calculateCompletionPercentage(record: any) {
-    let completed = 0;
-    if (record.harvestDate) completed++;
-    if (record.qualityStatus !== "pending") completed++;
-    if (record.deliveryDate) completed++;
-    return Math.round((completed / 3) * 100);
+  static async updateProcessing(batchId: string, data: ProcessingData) {
+    return await prisma.mangoBatch.update({ where: { batchId }, data })
+  }
+
+  static async updateLogistics(batchId: string, data: LogisticsData) {
+    return await prisma.mangoBatch.update({ where: { batchId }, data })
   }
 }

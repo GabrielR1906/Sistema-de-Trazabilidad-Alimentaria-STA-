@@ -4,8 +4,8 @@ import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, Loader2 } from "lucide-react"
-import { TraceabilityLogic } from "@/lib/business-logic"
 import { TraceabilityTimeline } from "./traceability-timeline"
+import { getBatchAction } from "@/app/actions" // Importamos la Server Action
 
 export function BatchSearch() {
   const [query, setQuery] = useState("")
@@ -15,7 +15,8 @@ export function BatchSearch() {
   const handleSearch = async () => {
     if (!query) return
     setLoading(true)
-    const data = await TraceabilityLogic.getBatch(query)
+    // Usamos la Server Action
+    const data = await getBatchAction(query)
     setResult(data)
     setLoading(false)
   }

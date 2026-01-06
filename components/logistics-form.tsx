@@ -1,11 +1,12 @@
 "use client"
+
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Truck } from "lucide-react"
-import { TraceabilityLogic } from "@/lib/business-logic"
 import { useToast } from "@/hooks/use-toast"
+import { saveLogisticsAction } from "@/app/actions" // Importamos la Server Action
 
 export function LogisticsForm({ onSuccess }: { onSuccess?: () => void }) {
   const [batchId, setBatchId] = useState("")
@@ -16,7 +17,9 @@ export function LogisticsForm({ onSuccess }: { onSuccess?: () => void }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const data = { batchId, transportTemperature: parseFloat(temp), deliveryDate: date }
-    const validation = await TraceabilityLogic.saveLogistics(data)
+    
+    // Usamos la Server Action
+    const validation = await saveLogisticsAction(data)
 
     if (!validation.isValid) {
       toast({ title: "Error", description: validation.errors.join(", "), variant: "destructive" })
