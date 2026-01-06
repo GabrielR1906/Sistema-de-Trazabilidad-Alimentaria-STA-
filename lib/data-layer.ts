@@ -1,7 +1,9 @@
 // ===========================
 // DATA LAYER (Capa de Datos)
 // ===========================
-// Simulates database operations with in-memory storage
+
+import { prisma } from "./prisma"
+import type { HarvestData, ProcessingData, LogisticsData } from "./data-layer"
 
 export interface HarvestData {
   batchId: string
@@ -36,61 +38,37 @@ export interface TraceabilityRecord {
   updatedAt: string
 }
 
-// In-memory database simulation
-class DataStore {
-  private records: Map<string, TraceabilityRecord> = new Map()
 
-  // Create or get a record
-  getOrCreateRecord(batchId: string): TraceabilityRecord {
-    if (!this.records.has(batchId)) {
-      const now = new Date().toISOString()
-      this.records.set(batchId, {
-        batchId,
-        createdAt: now,
-        updatedAt: now,
-      })
-    }
-    return this.records.get(batchId)!
+export class DataLayer {
+  static async getRecord(batchId: string) {
+    return await prisma.mangoBatch.findUnique({ where: { batchId } })
   }
 
-  // Update harvest data
-  updateHarvest(batchId: string, data: HarvestData): void {
-    const record = this.getOrCreateRecord(batchId)
-    record.harvest = data
-    record.updatedAt = new Date().toISOString()
+  static async getAllRecords() {
+    return await prisma.mangoBatch.findMany({
+      orderBy: { updatedAt: 'desc' }
+    })
   }
 
-  // Update processing data
-  updateProcessing(batchId: string, data: ProcessingData): void {
-    const record = this.getOrCreateRecord(batchId)
-    record.processing = data
-    record.updatedAt = new Date().toISOString()
+  static async updateHarvest(batchId: string, data: any) {
+    return await prisma.mangoBatch.upsert({
+      where: { batchId },
+      update: { ...data },
+      create: { batchId, ...data }
+    })
   }
 
-  // Update logistics data
-  updateLogistics(batchId: string, data: LogisticsData): void {
-    const record = this.getOrCreateRecord(batchId)
-    record.logistics = data
-    record.updatedAt = new Date().toISOString()
+  static async updateProcessing(batchId: string, data: any) {
+    return await prisma.mangoBatch.update({
+      where: { batchId },
+      data: { ...data }
+    })
   }
 
-  // Get a specific record
-  getRecord(batchId: string): TraceabilityRecord | null {
-    return this.records.get(batchId) || null
-  }
-
-  // Get all records
-  getAllRecords(): TraceabilityRecord[] {
-    return Array.from(this.records.values()).sort(
-      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-    )
-  }
-
-  // Delete a record
-  deleteRecord(batchId: string): boolean {
-    return this.records.delete(batchId)
+  static async updateLogistics(batchId: string, data: any) {
+    return await prisma.mangoBatch.update({
+      where: { batchId },
+      data: { ...data }
+    })
   }
 }
-
-// Singleton instance
-export const dataStore = new DataStore()
