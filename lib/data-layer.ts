@@ -1,9 +1,5 @@
-// ===========================
-// DATA LAYER (Capa de Datos)
-// ===========================
-
+// lib/data-layer.ts
 import { prisma } from "./prisma"
-import type { HarvestData, ProcessingData, LogisticsData } from "./data-layer"
 
 export interface HarvestData {
   batchId: string
@@ -29,15 +25,7 @@ export interface LogisticsData {
   carrier?: string
 }
 
-export interface TraceabilityRecord {
-  batchId: string
-  harvest?: HarvestData
-  processing?: ProcessingData
-  logistics?: LogisticsData
-  createdAt: string
-  updatedAt: string
-}
-
+export type TraceabilityRecord = any; // Representa el modelo MangoBatch plano
 
 export class DataLayer {
   static async getRecord(batchId: string) {
@@ -45,12 +33,10 @@ export class DataLayer {
   }
 
   static async getAllRecords() {
-    return await prisma.mangoBatch.findMany({
-      orderBy: { updatedAt: 'desc' }
-    })
+    return await prisma.mangoBatch.findMany({ orderBy: { updatedAt: 'desc' } })
   }
 
-  static async updateHarvest(batchId: string, data: any) {
+  static async updateHarvest(batchId: string, data: HarvestData) {
     return await prisma.mangoBatch.upsert({
       where: { batchId },
       update: { ...data },
@@ -58,17 +44,11 @@ export class DataLayer {
     })
   }
 
-  static async updateProcessing(batchId: string, data: any) {
-    return await prisma.mangoBatch.update({
-      where: { batchId },
-      data: { ...data }
-    })
+  static async updateProcessing(batchId: string, data: ProcessingData) {
+    return await prisma.mangoBatch.update({ where: { batchId }, data })
   }
 
-  static async updateLogistics(batchId: string, data: any) {
-    return await prisma.mangoBatch.update({
-      where: { batchId },
-      data: { ...data }
-    })
+  static async updateLogistics(batchId: string, data: LogisticsData) {
+    return await prisma.mangoBatch.update({ where: { batchId }, data })
   }
 }
